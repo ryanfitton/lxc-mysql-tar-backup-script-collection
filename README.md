@@ -1,5 +1,5 @@
 # Backup scripts
-## For LXC containers with MySQL and Tar.gx file backup to remote FTP Servers
+## For LXC containers with MySQL and Tar.GZ file backup to remote FTP Servers
 
 * Author: [Ryan Fitton](https://ryanfitton.co.uk)
 * Last updated: 2020/07/29
