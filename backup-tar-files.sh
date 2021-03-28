@@ -23,7 +23,7 @@
 
 
 # FTP Connection details
-source '/backup-config.sh'   # Include the backup config file
+source 'backup-config.sh'   # Include the backup config file
 
 # Backup options
 NAME="$1"                   # The Server Name - Used to categorize backups on the FTP server
@@ -102,50 +102,58 @@ then
 
 
             # Start tar.gz backup process
-            echo "Starting .tar.gz backup process."
-            tar -cvpzf $GLOBAL_BACKUP_TEMP_SAVEPATH/$FILENAME --exclude=$GLOBAL_BACKUP_TEMP_SAVEPATH/$FILENAME $EXCLUDE_FILES --one-file-system $BACKUP_FILES
-            echo ".tar.gz backup process has finished."
-            echo "..."
-            printf "\n"
+            echo "Starting .tar.gz backup process..."
 
-
-            # Verify tar.gz file has been created
-            echo "Verifying $FILENAME file has been created."
-            printf "\n"
-
-            if [ -f $GLOBAL_BACKUP_TEMP_SAVEPATH/$FILENAME ]
+            # Check if a connection can be made to the FTP Server address and port using 'netcat'
+            if nc -z -v -w5 $FTP_SERVER $FTP_PORT;
 
             # If success
             then
 
-                echo "File exists on the local server."
+                echo "Creating Tarball of files to $FILENAME."
+                tar -cvpzf $GLOBAL_BACKUP_TEMP_SAVEPATH/$FILENAME --exclude=$GLOBAL_BACKUP_TEMP_SAVEPATH/$FILENAME $EXCLUDE_FILES --one-file-system $BACKUP_FILES
+                echo "Tarball creation has finished."
+                echo "..."
                 printf "\n"
 
 
-                # Check to see if the 'lftp' program is installed
-                # Used for sending files using via the 'ftp' command
-                PACKAGE='lftp'
-                if dpkg -s $PACKAGE 2>/dev/null >/dev/null;
+                # Verify tar.gz file has been created
+                echo "Verifying $FILENAME file has been created."
+                printf "\n"
+
+                if [ -f $GLOBAL_BACKUP_TEMP_SAVEPATH/$FILENAME ]
 
                 # If success
                 then
 
-                    # Check if a connection can be made to the FTP Server address and port using 'netcat'
-                    if nc -z -v -w5 $FTP_SERVER $FTP_PORT;
+                    echo "File exists on the local server."
+                    printf "\n"
+
+
+                    # Check to see if the 'lftp' program is installed
+                    # Used for sending files using via the 'ftp' command
+                    PACKAGE='lftp'
+                    if dpkg -s $PACKAGE 2>/dev/null >/dev/null;
 
                     # If success
                     then
 
-                        # Start FTP transfer. Syntax: http://manpages.ubuntu.com/manpages/zesty/man1/tnftp.1.html
-                        echo "FTP transfer process will begin in in 30 seconds."
-                        echo "Press 'ctrl + c' now to cancel and keep the local backup only, otherwise wait for the FTP transfer process to begin."
-                        echo "..."
-                        printf "\n"
+                        # Check if a connection can be made to the FTP Server address and port using 'netcat'
+                        if nc -z -v -w5 $FTP_SERVER $FTP_PORT;
 
-                        sleep 30s # Wait 30 seconds
+                        # If success
+                        then
 
-                        # Start FTP transfer process. Syntax: https://linux.die.net/man/1/lftp
-                        echo "Starting FTP transfer process."
+                            # Start FTP transfer. Syntax: http://manpages.ubuntu.com/manpages/zesty/man1/tnftp.1.html
+                            echo "FTP transfer process will begin in in 30 seconds."
+                            echo "Press 'ctrl + c' now to cancel and keep the local backup only, otherwise wait for the FTP transfer process to begin."
+                            echo "..."
+                            printf "\n"
+
+                            sleep 30s # Wait 30 seconds
+
+                            # Start FTP transfer process. Syntax: https://linux.die.net/man/1/lftp
+                            echo "Starting FTP transfer process."
 
 # Indents are removed as they cause issues with the 'END_SCRIPT' tag
 # 1. Change directory on the local server
@@ -159,86 +167,95 @@ cd "$FTP_SAVEPATH"
 put "$FILENAME"
 END_SCRIPT
 
-                        echo "FTP transfer process has finished."
-                        printf "\n"
-
-
-                        # Check to see if the 'curl' program is installed
-                        # Used for check if the file exists on the FTP server via the 'curl' command
-                        PACKAGE='curl'
-                        if dpkg -s $PACKAGE 2>/dev/null >/dev/null;
-
-                        # If success
-                        then
-
-                            # Verify the file exists on the FTP server
-                            echo "FTP transfer verification will begin in 30 seconds."
-                            echo "..."
+                            echo "FTP transfer process has finished."
                             printf "\n"
 
-                            sleep 30s # Wait 30 seconds
 
-                            # If the file can be found using Curl on the FTP server
-                            if curl --output /dev/null --silent --head --fail $CURL_FTP_ARGUMENTS "ftp://$FTP_USERNAME:$FTP_PASSWORD@$FTP_SERVER:$FTP_PORT/$FTP_SAVEPATH/$FILENAME"
+                            # Check to see if the 'curl' program is installed
+                            # Used for check if the file exists on the FTP server via the 'curl' command
+                            PACKAGE='curl'
+                            if dpkg -s $PACKAGE 2>/dev/null >/dev/null;
 
                             # If success
                             then
 
-                                echo "File exists on the FTP server."
+                                # Verify the file exists on the FTP server
+                                echo "FTP transfer verification will begin in 30 seconds."
                                 echo "..."
                                 printf "\n"
 
-                                # Remove tar.gz file from the local server
-                                echo "Now removing $FILENAME from the local server."
-                                rm $GLOBAL_BACKUP_TEMP_SAVEPATH/$FILENAME
-                                echo "Finished removing file."
-                                echo "..."
-                                printf "\n"
+                                sleep 30s # Wait 30 seconds
+
+                                # If the file can be found using Curl on the FTP server
+                                if curl --output /dev/null --silent --head --fail $CURL_FTP_ARGUMENTS "ftp://$FTP_USERNAME:$FTP_PASSWORD@$FTP_SERVER:$FTP_PORT/$FTP_SAVEPATH/$FILENAME"
+
+                                # If success
+                                then
+
+                                    echo "File exists on the FTP server."
+                                    echo "..."
+                                    printf "\n"
+
+                                    # Remove tar.gz file from the local server
+                                    echo "Now removing $FILENAME from the local server."
+                                    rm $GLOBAL_BACKUP_TEMP_SAVEPATH/$FILENAME
+                                    echo "Finished removing file."
+                                    echo "..."
+                                    printf "\n"
 
 
-                                # Verify tar.gz file has been removed from the local server
-                                echo "Verifying $FILENAME has been removed from the local server."
-                                echo "..."
-                                printf "\n"
+                                    # Verify tar.gz file has been removed from the local server
+                                    echo "Verifying $FILENAME has been removed from the local server."
+                                    echo "..."
+                                    printf "\n"
 
-                                if [ -f $GLOBAL_BACKUP_TEMP_SAVEPATH/$FILENAME ]
+                                    if [ -f $GLOBAL_BACKUP_TEMP_SAVEPATH/$FILENAME ]
 
-                                    # If success
-                                    then
-                                        echo "File still exists on the local server."
-                                        echo "Backup has failed."
+                                        # If success
+                                        then
+                                            echo "File still exists on the local server."
+                                            echo "Backup has failed."
+                                            printf "\n"
+
+                                            # Send an email explaining this failure
+                                            echo "An email will be sent to $GLOBAL_EMAIL_TO"
+                                            echo "$FILENAME was supposed to removed, but still exists on the local server." | mail -s "Failure: $HOSTNAME Backup to FTP server" $GLOBAL_EMAIL_TO
+
+                                            exit 1 # Exit with general error
+
+
+                                    # If failure
+                                    else
+                                        echo "Backup has finished successfully."
                                         printf "\n"
 
-                                        # Send an email explaining this failure
+                                        # Send an email explaing a successful backup
                                         echo "An email will be sent to $GLOBAL_EMAIL_TO"
-                                        echo "$FILENAME was supposed to removed, but still exists on the local server." | mail -s "Failure: $HOSTNAME Backup to FTP server" $GLOBAL_EMAIL_TO
+                                        echo "Backup has finished successfully. $FILENAME has been created on the FTP server ($FTP_SERVER)." | mail -s "Success: $HOSTNAME Backup to FTP server" $GLOBAL_EMAIL_TO
 
-                                        exit 1 # Exit with general error
+                                        exit 0 # Successful exit
+
+                                    fi
 
 
                                 # If failure
                                 else
-                                    echo "Backup has finished successfully."
+                                    echo "File does not exist on the FTP server."
+                                    echo "Backup has failed."
                                     printf "\n"
 
-                                    # Send an email explaing a successful backup
+                                    # Send an email explaining this failure
                                     echo "An email will be sent to $GLOBAL_EMAIL_TO"
-                                    echo "Backup has finished successfully. $FILENAME has been created on the FTP server ($FTP_SERVER)." | mail -s "Success: $HOSTNAME Backup to FTP server" $GLOBAL_EMAIL_TO
+                                    echo "$FILENAME does not exist on the FTP server. The .tar.gz file has been kept on the local server - consider moving this file to the FTP server manually." | mail -s "Failure: $HOSTNAME Backup to FTP server" $GLOBAL_EMAIL_TO
 
-                                    exit 0 # Successful exit
-
+                                    exit 1 # Exit with general error
                                 fi
 
 
                             # If failure
                             else
-                                echo "File does not exist on the FTP server."
-                                echo "Backup has failed."
-                                printf "\n"
-
-                                # Send an email explaining this failure
-                                echo "An email will be sent to $GLOBAL_EMAIL_TO"
-                                echo "$FILENAME does not exist on the FTP server. The .tar.gz file has been kept on the local server - consider moving this file to the FTP server manually." | mail -s "Failure: $HOSTNAME Backup to FTP server" $GLOBAL_EMAIL_TO
+                                echo "The '$PACKAGE' package is not installed on your system."
+                                echo "Install by running: 'sudo apt-get install $PACKAGE'"
 
                                 exit 1 # Exit with general error
                             fi
@@ -246,8 +263,7 @@ END_SCRIPT
 
                         # If failure
                         else
-                            echo "The '$PACKAGE' package is not installed on your system."
-                            echo "Install by running: 'sudo apt-get install $PACKAGE'"
+                            echo "Could not connect to '$FTP_SERVER' on port '$FTP_PORT'."
 
                             exit 1 # Exit with general error
                         fi
@@ -255,7 +271,8 @@ END_SCRIPT
 
                     # If failure
                     else
-                        echo "Could not connect to '$FTP_SERVER' on port '$FTP_PORT'."
+                        echo "The '$PACKAGE' package is not installed on your system."
+                        echo "Install by running: 'sudo apt-get install $PACKAGE'"
 
                         exit 1 # Exit with general error
                     fi
@@ -263,25 +280,24 @@ END_SCRIPT
 
                 # If failure
                 else
-                    echo "The '$PACKAGE' package is not installed on your system."
-                    echo "Install by running: 'sudo apt-get install $PACKAGE'"
+                    echo "File does not exist on the local server."
+                    echo "Backup has failed."
+                    printf "\n"
+
+                    # Send an email explaining this failure
+                    echo "An email will be sent to $GLOBAL_EMAIL_TO"
+                    echo "Creating $FILENAME on local server failed." | mail -s "Failure: $HOSTNAME Backup to FTP server" $GLOBAL_EMAIL_TO
 
                     exit 1 # Exit with general error
+
                 fi
 
 
             # If failure
             else
-                echo "File does not exist on the local server."
-                echo "Backup has failed."
-                printf "\n"
-
-                # Send an email explaining this failure
-                echo "An email will be sent to $GLOBAL_EMAIL_TO"
-                echo "Creating $FILENAME on local server failed." | mail -s "Failure: $HOSTNAME Backup to FTP server" $GLOBAL_EMAIL_TO
+                echo "Could not connect to '$FTP_SERVER' on port '$FTP_PORT'."
 
                 exit 1 # Exit with general error
-
             fi
 
 
