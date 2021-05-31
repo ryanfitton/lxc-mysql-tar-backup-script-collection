@@ -113,7 +113,7 @@ then
             then
 
                 echo "Dumping SQL database to $FILENAME."
-                mysqldump -h"$MYSQL_HOST" -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --all-databases > "$GLOBAL_BACKUP_TEMP_SAVEPATH/$FILENAME"
+                mysqldump -h"$MYSQL_HOST" -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --all-databases --column-statistics=0 > "$GLOBAL_BACKUP_TEMP_SAVEPATH/$FILENAME"
                 echo "SQL dump has finished."
                 echo "..."
                 printf "\n"
